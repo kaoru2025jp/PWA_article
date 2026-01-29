@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>PWA Article</title>
+
+<style>
+body {
+  font-family: sans-serif;
+  padding: 20px;
+}
+button {
+  margin: 5px 0;
+}
+#article {
+  white-space: pre-wrap;
+  border: 1px solid #ccc;
+  padding: 10px;
+  margin-top: 10px;
+}
+canvas {
+  border: 1px solid black;
+  margin-top: 10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>条文検索</h2>
+
+<input type="number" id="num" min="1" max="7">
+<button onclick="fetchArticle()">取得</button>
+
+<div id="article"></div>
+
+<button id="contractBtn" disabled onclick="makeContract()">
+契約書生成
+</button>
+
+<h3>署名</h3>
+<canvas id="sign" width="400" height="150"></canvas>
+<button onclick="clearSign()">クリア</button>
+
+<script>
+const GAS_URL = "ここにGASのWebApp URL";
+
+const articles = {};
+const selected = new Set();
+
+function fetchArticle() {
+  const n = document.getElementById("num").value;
+  fetch(`${GAS_URL}?num=${n}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.text) {
+        articles[n] = data.text;
+        selected.add(Number(n));
+        document.getElementById("article").innerText = data.text;
+        if (selected.size === 7) {
+          document.getElementById("contractBtn").disabled = false;
+        }
+      }
+    });
+}
+
+function makeContract() {
+  let text = "契約書\n\n";
+  for (let i = 1; i <= 7; i++) {
+    text += articles[i] + "\n\n";
+  }
+  document.getElementById("article").innerText = text;
+}
+
+/* 署名ボード */
+const canvas = document.getElementById("sign");
+const ctx = canvas.getContext("2d");
+let drawing = false;
+
+canvas.addEventListener("mousedown", () => drawing = true);
+canvas.addEventListener("mouseup", () => drawing = false);
+canvas.addEventListener("mousemove", draw);
+
+function draw(e) {
+  if (!drawing) return;
+  ctx.lineTo(e.offsetX, e.offsetY);
+  ctx.stroke();
+}
+
+function clearSign() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+}
+</script>
+
+</body>
+</html>
